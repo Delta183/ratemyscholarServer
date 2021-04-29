@@ -44,7 +44,7 @@ router.post('/scholars', async (request, response) => {
         const { name, faculty, rating, school, position, profile_picture } = request.body;
         // TODO: check that each thing here (ex. name, school) are valid before inserting into DB. Check if null, empty, check if number)
         const params = [name, faculty, rating, school, position, profile_picture];
-        const insertResult = await db.query("INSERT INTO scholar(name, faculty, rating, school, position, profile_picture) VALUES(?, ?, ?, ?, ?, ?, ?)", params);
+        const insertResult = await db.query("INSERT INTO scholar(name, faculty, rating, school, position, profile_picture) VALUES(?, ?, ?, ?, ?, ?)", params);
         const fetchResult = await db.query("SELECT * FROM scholar WHERE id=?", [insertResult.insertId]);
         response.json(fetchResult);
     } catch (error) {
