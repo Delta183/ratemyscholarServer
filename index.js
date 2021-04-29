@@ -11,7 +11,7 @@ const db = require("./db");
 // App Setup
 const app = express();
 const router = new Router();
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
@@ -107,6 +107,34 @@ router.get('/scholar_search/:query', async (request, response) => {
         // Check that request.params.id is also valid
         const fetchResults = await db.query("SELECT * FROM scholar WHERE name LIKE CONCAT('%', ?, '%')", [request.params.query]);
         response.json(fetchResults);
+    } catch (error) {
+        response.status(400).json(error);
+    }
+});
+
+/// Comments
+
+router.post('/comments', async (request, response) => {
+    // TODO: Check request.headers for information on the User
+    // and ensure that you only do this for logged in Users
+    // request.header("Authorization")
+    try {
+        const { scholar_id, text, commenter_name } = request.body;
+        // TODO: check that each thing here (ex. name, school) are valid before inserting into DB. Check if null, empty, check if number)
+        const params = [scholar_id, text, commenter_name];
+        const insertResult = await db.query("INSERT INTO comments(scholar_id, text, commenter_name) VALUES(?, ?, ?)", params);
+        const fetchResult = await db.query("SELECT * FROM comments WHERE id=?", [insertResult.insertId]);
+        response.json(fetchResult);
+    } catch (error) {
+        response.status(400).json(error);
+    }
+});
+
+router.get('/comments/:scholar_id', async (request, response) => {
+    try {
+        const scholarID = request.params.scholar_id;
+        const results = await db.query("SELECT * FROM comments WHERE scholar_id=?", [scholarID]);
+        response.json(results);
     } catch (error) {
         response.status(400).json(error);
     }
