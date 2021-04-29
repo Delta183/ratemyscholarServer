@@ -112,12 +112,44 @@ router.get('/scholar_search/:query', async (request, response) => {
     }
 });
 
+router.get('/rating/:scholar_id', async (request, response) => {
+    try {
+        const rating = fetchRatingForScholarID(request.params.scholar_id);
+        response.json({
+            "rating": rating.toFixed(1),
+        });
+    } catch (error) {
+        response.status(400).json(error);
+    }
+});
+
+/// Helpers
+async function fetchRatingForScholarID(scholarID) {
+    try {
+        const fetchResult = await db.query("SELECT * FROM comments WHERE scholar_id=?", [scholarID]);
+        const length = fetchResult.length;
+        let sum = 0;
+        for (var i = 0; i < length; i++) {
+            sum += fetchResult[i].rating;
+        }
+        
+        if (length === 0) {
+            return 0;
+        }
+
+        return sum / length;
+    } catch (error) {
+        throw error;
+    }
+};
+
 /// Comments
 
 router.post('/comments', async (request, response) => {
     // TODO: Check request.headers for information on the User
     // and ensure that you only do this for logged in Users
     // request.header("Authorization")
+    let didSucceed = false;
     try {
         const { scholar_id, text, commenter_name, rating} = request.body;
         // TODO: check that each thing here (ex. name, school) are valid before inserting into DB. Check if null, empty, check if number)
@@ -125,9 +157,17 @@ router.post('/comments', async (request, response) => {
         const insertResult = await db.query("INSERT INTO comments(scholar_id, text, commenter_name, rating) VALUES(?, ?, ?, ?)", params);
         const fetchResult = await db.query("SELECT * FROM comments WHERE id=?", [insertResult.insertId]);
         response.json(fetchResult);
+        didSucceed = true;
     } catch (error) {
         response.status(400).json(error);
     }
+
+    if (!didSucceed) {
+        return;
+    }
+
+    // If we did succeed then we should update the rolling average 
+    // FIRST we need to get the sum and count of all ratings for this scholar
 });
 
 router.get('/comments/:scholar_id', async (request, response) => {
