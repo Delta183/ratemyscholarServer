@@ -119,10 +119,10 @@ router.post('/comments', async (request, response) => {
     // and ensure that you only do this for logged in Users
     // request.header("Authorization")
     try {
-        const { scholar_id, text, commenter_name } = request.body;
+        const { scholar_id, text, commenter_name, rating} = request.body;
         // TODO: check that each thing here (ex. name, school) are valid before inserting into DB. Check if null, empty, check if number)
-        const params = [scholar_id, text, commenter_name];
-        const insertResult = await db.query("INSERT INTO comments(scholar_id, text, commenter_name) VALUES(?, ?, ?)", params);
+        const params = [scholar_id, text, commenter_name, rating];
+        const insertResult = await db.query("INSERT INTO comments(scholar_id, text, commenter_name, rating) VALUES(?, ?, ?, ?)", params);
         const fetchResult = await db.query("SELECT * FROM comments WHERE id=?", [insertResult.insertId]);
         response.json(fetchResult);
     } catch (error) {
