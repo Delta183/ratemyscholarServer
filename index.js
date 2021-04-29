@@ -112,36 +112,23 @@ router.get('/scholar_search/:query', async (request, response) => {
     }
 });
 
-router.get('/rating/:scholar_id', async (request, response) => {
+router.get('/test_rating/:scholar_id', async (request, response) => {
     try {
-        const rating = fetchRatingForScholarID(request.params.scholar_id);
-        response.json({
-            "rating": rating.toFixed(1),
-        });
-    } catch (error) {
-        response.status(400).json(error);
-    }
-});
-
-/// Helpers
-async function fetchRatingForScholarID(scholarID) {
-    try {
-        const fetchResult = await db.query("SELECT * FROM comments WHERE scholar_id=?", [scholarID]);
+        const fetchResult = await db.query("SELECT * FROM comments WHERE scholar_id=?", [request.params.scholar_id]);
         const length = fetchResult.length;
         let sum = 0;
         for (var i = 0; i < length; i++) {
             sum += fetchResult[i].rating;
         }
         
-        if (length === 0) {
-            return 0;
-        }
-
-        return sum / length;
+        const averageRating = length === 0 ? 0 : sum / length;
+        response.json({
+            "rating": averageRating.toFixed(1),
+        });
     } catch (error) {
-        throw error;
+        response.status(400).json(error);
     }
-};
+});
 
 /// Comments
 
@@ -150,8 +137,10 @@ router.post('/comments', async (request, response) => {
     // and ensure that you only do this for logged in Users
     // request.header("Authorization")
     let didSucceed = false;
+    let scholarID = null;
     try {
         const { scholar_id, text, commenter_name, rating} = request.body;
+        scholarID = scholar_id;
         // TODO: check that each thing here (ex. name, school) are valid before inserting into DB. Check if null, empty, check if number)
         const params = [scholar_id, text, commenter_name, rating];
         const insertResult = await db.query("INSERT INTO comments(scholar_id, text, commenter_name, rating) VALUES(?, ?, ?, ?)", params);
@@ -162,12 +151,25 @@ router.post('/comments', async (request, response) => {
         response.status(400).json(error);
     }
 
-    if (!didSucceed) {
+    if (!didSucceed || scholarID === null) {
         return;
     }
 
     // If we did succeed then we should update the rolling average 
     // FIRST we need to get the sum and count of all ratings for this scholar
+    try {
+        const fetchResult = await db.query("SELECT * FROM comments WHERE scholar_id=?", [scholarID]);
+        const length = fetchResult.length;
+        let sum = 0;
+        for (var i = 0; i < length; i++) {
+            sum += fetchResult[i].rating;
+        }
+        
+        const averageRating = length === 0 ? 0 : sum / length;
+        await db.query("UPDATE scholar SET rating=? WHERE id=?", [averageRating, scholarID]);
+    } catch (error) {
+        console.log("Error computing average: " + error);
+    }
 });
 
 router.get('/comments/:scholar_id', async (request, response) => {
