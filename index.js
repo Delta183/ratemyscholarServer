@@ -41,10 +41,10 @@ router.post('/scholars', async (request, response) => {
     // and ensure that you only do this for logged in Users
     // request.header("Authorization")
     try {
-        const { name, faculty, comments, rating, school, position, profile_picture } = request.body;
+        const { name, faculty, rating, school, position, profile_picture } = request.body;
         // TODO: check that each thing here (ex. name, school) are valid before inserting into DB. Check if null, empty, check if number)
-        const params = [name, faculty, comments, rating, school, position, profile_picture];
-        const insertResult = await db.query("INSERT INTO scholar(name, faculty, comments, rating, school, position, profile_picture) VALUES(?, ?, ?, ?, ?, ?, ?)", params);
+        const params = [name, faculty, rating, school, position, profile_picture];
+        const insertResult = await db.query("INSERT INTO scholar(name, faculty, rating, school, position, profile_picture) VALUES(?, ?, ?, ?, ?, ?, ?)", params);
         const fetchResult = await db.query("SELECT * FROM scholar WHERE id=?", [insertResult.insertId]);
         response.json(fetchResult);
     } catch (error) {
@@ -57,11 +57,11 @@ router.put('/scholars/:id', async (request, response) => {
     // and ensure that you only do this for logged in Users
     // request.header("Authorization")
     try {
-        const { name, faculty, comments, rating, school, position, profile_picture } = request.body;
+        const { name, faculty, rating, school, position, profile_picture } = request.body;
         // TODO: check that each thing here (ex. name, school) are valid before inserting into DB. Check if null, empty, check if number)
         // Check that request.params.id is also valid
-        const params = [name, faculty, comments, rating, school, position, profile_picture, request.params.id];
-        await db.query("UPDATE scholar SET name=?, faculty=?, comments=?, rating=?, school=?, position=?, profile_picture=? WHERE id=?", params);
+        const params = [name, faculty, rating, school, position, profile_picture, request.params.id];
+        await db.query("UPDATE scholar SET name=?, faculty=?, rating=?, school=?, position=?, profile_picture=? WHERE id=?", params);
         const fetchResult = await db.query("SELECT * FROM scholar WHERE id=?", [request.params.id]);
         response.json(fetchResult);
     } catch (error) {
